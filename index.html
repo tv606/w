@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="wnmp.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Winamp Zero">
+    <title>Winamp Zero</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212; 
+            color: #fff; 
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            padding: 4px;
+            overflow: hidden;
+        }
+
+        .zero-watch-case {
+            background: #26262e;
+            border: 2px solid #4a4a52;
+            border-top: 2px solid #6b6b75;
+            border-left: 2px solid #6b6b75;
+            border-radius: 2px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.9);
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            position: relative;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .zero-dial {
+            background-color: #1e1e24;
+            border: 1px solid #000;
+            border-radius: 2px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            height: 100%;
+        }
+
+        .zero-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 10px;
+            background: linear-gradient(to right, #081d3e, #134688, #081d3e);
+            padding: 2px 4px;
+            border-radius: 2px;
+            border: 1px solid #2b61a3;
+        }
+
+        .zero-header .chrono {
+            color: #fff;
+            font-size: 9px;
+            font-family: monospace;
+        }
+
+        .lcd-border {
+            border: 1px solid #383840;
+            border-bottom: 1px solid #6e6e78;
+            border-right: 1px solid #6e6e78;
+            border-radius: 2px;
+            background-color: #000;
+            padding: 2px;
+        }
+
+        .zero-lcd {
+            background-color: #000000;
+            border-radius: 2px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            border: 1px solid #111;
+        }
+
+        #trackNameDisplay {
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            border-bottom: 1px dashed #003300;
+            padding-bottom: 1px;
+            height: 14px;
+            color: #fff;
+        }
+
+        .lcd-main-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lcd-indicators {
+            font-size: 9px;
+            font-weight: bold;
+            display: flex;
+            gap: 6px;
+            color: #91c1ff;
+        }
+
+        #timeDisplay {
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 18px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #fff;
+            text-shadow: 0 0 3px rgba(0,255,0,0.6);
+        }
+
+        #progressBar {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #112211;
+            border: 1px solid #ffffff9c;
+            border-radius: 0;
+            outline: none;
+            margin: 2px 0;
+        }
+
+        #progressBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 3px #fff;
+        }
+
+        #fileInput, #importInput {
+            display: none;
+        }
+
+        label {
+            display: block;
+            padding: 4px;
+            background: linear-gradient(#4a4a52, #26262e);
+            color: #fff;
+            border: 1px solid #6b6b75;
+            border-bottom-color: #111;
+            border-right-color: #111;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 9px;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        label:hover {
+            background: linear-gradient(#5a5a62, #36363e);
+        }
+
+        .controls {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+
+        .controls button {
+            flex: 1;
+            padding: 4px 0;
+            border: 1px solid #6b6b75;
+            border-bottom-color: #111;
+            border-right-color: #111;
+            border-radius: 2px;
+            background: linear-gradient(#4a4a52, #26262e);
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 9px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .controls button#playPause {
+            flex: 2;
+            padding: 4px 0;
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .controls button:active, .controls button.active {
+            background: #151518;
+            border-color: #000;
+            border-bottom-color: #4a4a52;
+            border-right-color: #4a4a52;
+            color: #ffcc00;
+        }
+
+        #playlist {
+            list-style: none;
+            padding: 2px;
+            background-color: #000000;
+            border: 1px solid #383840;
+            border-radius: 2px;
+            flex: 1;
+            margin: 0;
+            overflow-y: auto;
+            text-align: left;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            position: relative;
+        }
+
+        #playlist::-webkit-scrollbar {
+            width: 6px;
+        }
+        #playlist::-webkit-scrollbar-track {
+            background: #111;
+        }
+        #playlist::-webkit-scrollbar-thumb {
+            background: #383840;
+        }
+
+        #playlist li {
+            padding: 3px 4px;
+            border-bottom: 1px solid #112211;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            -webkit-user-select: none;
+            user-select: none;
+            background-color: #000000;
+        }
+
+        #playlist li.drag-over {
+            border-top: 2px solid #fff;
+            background-color: #002200;
+        }
+
+        #playlist li.touch-dragging {
+            opacity: 0.5;
+            background-color: #000088 !important;
+        }
+
+        #playlist li.active {
+            color: #fff;
+            background-color: #0e3569;
+            font-weight: bold;
+        }
+
+        .track-info-group {
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            flex: 1;
+            pointer-events: none;
+        }
+
+        .track-title-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 4px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-weight: bold;
+            font-size: 9px;
+            cursor: pointer;
+            padding: 0 2px;
+            opacity: 0.7;
+        }
+
+        .delete-btn:hover {
+            opacity: 1;
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+
+        .drag-handle {
+            font-size: 11px;
+            color: #555;
+            padding: 0 2px;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #playlist li.active .drag-handle {
+            color: #fff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background: #26262e;
+            border: 2px solid #6b6b75;
+            border-radius: 4px;
+            padding: 12px;
+            width: 100%;
+            max-width: 360px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            font-size: 12px;
+            color: #fff;
+            border-bottom: 1px solid #4a4a52;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .modal-content label {
+            font-size: 9px;
+            margin-bottom: 2px;
+            text-align: left;
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: #aaa;
+        }
+
+        .modal-content input[type="text"], .modal-content select {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 8px;
+            background: #000;
+            border: 1px solid #4a4a52;
+            color: #fff;
+            border-radius: 2px;
+            font-size: 11px;
+            outline: none;
+            font-family: monospace;
+        }
+
+        .modal-content input[type="text"]:focus, .modal-content select:focus {
+            border-color: #fff;
+        }
+
+        .modal-content button {
+            padding: 6px;
+            border: 1px solid #6b6b75;
+            border-radius: 2px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .modal-content button:hover {
+            opacity: 0.9;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+
+        .btn-save { background: #134688; color: #fff; border-color: #2b61a3; }
+        .btn-export { background: #fffce8; color: #000; border-color: #fffce8; }
+        .btn-import { background: #1a5fb9; color: #fff; border-color: #1a5fb9; }
+        .btn-delete { background: #992626; color: #fff; border-color: #992626; }
+        .btn-close { background: #4a4a52; color: #fff; width: 70px; }
+    </style>
+</head>
+<body>
+
+    <div class="zero-watch-case">
+        <div class="zero-dial">
+            
+            <div class="zero-header">
+                <span>WINAMP ZERO</span>
+                <span class="chrono">by dOWNER</span>
+            </div>
+
+            <div class="lcd-border">
+                <div class="zero-lcd">
+                    <div id="trackNameDisplay">*** DOSYA SEÇİNİZ ***</div>
+                    
+                    <div class="lcd-main-row">
+                        <div class="lcd-indicators">
+                            <span id="loopIndicator">ALL</span>
+                            <span>PLAY</span>
+                        </div>
+                        <div id="timeDisplay">00:00</div>
+                    </div>
+
+                    <input type="range" id="progressBar" value="0" min="0" max="100">
+                </div>
+            </div>
+
+            <input type="file" id="fileInput" accept=".mp3,.wav" multiple />
+            <label for="fileInput">Müzik Ekle (MP3 / WAV)</label>
+
+            <div class="controls">
+                <button id="prevTrack"><<</button>
+                <button id="playPause">PLAY</button>
+                <button id="nextTrack">>></button>
+                <button id="repeatMode">REP</button>
+                <button id="shuffle">SHUF</button>
+                <button id="playlistManagerBtn">LST</button>
+                <button id="clearPlaylist" style="color: #ff4444;">CLR</button>
+            </div>
+
+            <ul id="playlist"></ul>
+        </div>
+    </div>
+
+    <div id="playlistModal" class="modal">
+        <div class="modal-content">
+            <h3>PLAYLIST YÖNETİMİ</h3>
+            
+            <label>MEVCUT LİSTEYİ KAYDET:</label>
+            <input type="text" id="playlistNameInput" placeholder="Liste adı girin...">
+            <button id="savePlaylistBtn" class="btn-save" style="width:100%; margin-bottom:8px;">Kaydet</button>
+
+            <label>KAYITLI LİSTELERİ YÖNET:</label>
+            <select id="savedPlaylistsSelect"></select>
+            
+            <div style="display:flex; gap:4px; margin-bottom:8px;">
+                <button id="loadPlaylistBtn" class="btn-save" style="flex:1;">Yükle</button>
+                <button id="exportPlaylistBtn" class="btn-export" style="flex:1;">ZIP Yap</button>
+                <button id="deleteSavedPlaylistBtn" class="btn-delete" style="flex:1;">Sil</button>
+            </div>
+
+            <input type="file" id="importInput" accept=".zip" />
+            <button id="importPlaylistBtn" class="btn-import" style="width:100%; margin-bottom:8px;">ZIP Paketi Yükle (.zip)</button>
+
+            <div class="modal-actions">
+                <button id="closeModalBtn" class="btn-close">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseButton = document.getElementById('playPause');
+        const prevTrackButton = document.getElementById('prevTrack');
+        const nextTrackButton = document.getElementById('nextTrack');
+        const repeatButton = document.getElementById('repeatMode');
+        const shuffleButton = document.getElementById('shuffle');
+        const clearButton = document.getElementById('clearPlaylist');
+        const playlist = document.getElementById('playlist');
+        const progressBar = document.getElementById('progressBar');
+        const trackNameDisplay = document.getElementById('trackNameDisplay');
+        const loopIndicator = document.getElementById('loopIndicator');
+
+        const playlistManagerBtn = document.getElementById('playlistManagerBtn');
+        const playlistModal = document.getElementById('playlistModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const savePlaylistBtn = document.getElementById('savePlaylistBtn');
+        const playlistNameInput = document.getElementById('playlistNameInput');
+        const savedPlaylistsSelect = document.getElementById('savedPlaylistsSelect');
+        const loadPlaylistBtn = document.getElementById('loadPlaylistBtn');
+        const deleteSavedPlaylistBtn = document.getElementById('deleteSavedPlaylistBtn');
+        const exportPlaylistBtn = document.getElementById('exportPlaylistBtn');
+        const importPlaylistBtn = document.getElementById('importPlaylistBtn');
+        const importInput = document.getElementById('importInput');
+
+        let tracks = [];
+        let currentTrackIndex = -1;
+        let repeatMode = 'all';
+        let isShuffle = false;
+        let isDragging = false;
+        let db = null;
+        
+        let draggedIndex = null;
+        let touchStartIdx = null;
+        let targetTouchLi = null;
+
+        const dbName = "zeroPlayerDB";
+        const request = indexedDB.open(dbName, 2);
+
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("tracks")) {
+                db.createObjectStore("tracks", { keyPath: "id", autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains("playlists")) {
+                db.createObjectStore("playlists", { keyPath: "name" });
+            }
+        };
+
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            loadTracksFromDB();
+        };
+
+        request.onerror = () => {
+            trackNameDisplay.textContent = "ERR: DB LOAD";
+        };
+
+        function loadTracksFromDB() {
+            const transaction = db.transaction(["tracks"], "readonly");
+            const store = transaction.objectStore("tracks");
+            const getAllRequest = store.getAll();
+
+            getAllRequest.onsuccess = () => {
+                tracks.forEach(track => { if(track.url) URL.revokeObjectURL(track.url); });
+
+                tracks = getAllRequest.result.map(item => {
+                    const fileURL = URL.createObjectURL(item.file);
+                    return { id: item.id, name: item.name, url: fileURL, file: item.file };
+                });
+
+                renderAllTracks();
+
+                if (tracks.length > 0 && currentTrackIndex === -1) {
+                    trackNameDisplay.textContent = "WINAMP READY";
+                }
+            };
+        }
+
+        function saveTrackToDB(file) {
+            const transaction = db.transaction(["tracks"], "readwrite");
+            const store = transaction.objectStore("tracks");
+            const addRequest = store.add({ name: file.name, file: file });
+
+            addRequest.onsuccess = () => {
+                loadTracksFromDB();
+            };
+        }
+
+        function deleteTrackFromDB(id) {
+            const transaction = db.transaction(["tracks"], "readwrite");
+            const store = transaction.objectStore("tracks");
+            store.delete(id);
+        }
+
+        function updateDBOrder() {
+            const transaction = db.transaction(["tracks"], "readwrite");
+            const store = transaction.objectStore("tracks");
+            store.clear().onsuccess = () => {
+                tracks.forEach(track => {
+                    store.add({ name: track.name, file: track.file });
+                });
+            };
+        }
+
+        function renderAllTracks() {
+            playlist.innerHTML = "";
+            tracks.forEach((track, index) => {
+                renderTrackInUI(track, index);
+            });
+        }
+
+        function moveTrack(fromIndex, toIndex) {
+            if (fromIndex === null || toIndex === null || fromIndex === toIndex) return;
+            const currentTrack = tracks[currentTrackIndex];
+            
+            const movedTrack = tracks.splice(fromIndex, 1)[0];
+            tracks.splice(toIndex, 0, movedTrack);
+
+            if (currentTrackIndex !== -1) {
+                currentTrackIndex = tracks.indexOf(currentTrack);
+            }
+
+            renderAllTracks();
+            updateDBOrder();
+        }
+
+        function removeTrackAtIndex(index) {
+            const track = tracks[index];
+            if (!track) return;
+
+            const cleanName = track.name.replace(/\.(mp3|wav)$/i, '');
+            if (!confirm(`"${cleanName}" şarkısını silmek istediğinize emin misiniz?`)) {
+                return;
+            }
+
+            deleteTrackFromDB(track.id);
+
+            if (index === currentTrackIndex) {
+                audioPlayer.pause();
+                audioPlayer.src = "";
+                playPauseButton.classList.remove('active');
+                playPauseButton.textContent = 'PLAY';
+                trackNameDisplay.textContent = "STOPPED";
+                currentTrackIndex = -1;
+            } else if (index < currentTrackIndex) {
+                currentTrackIndex--;
+            }
+
+            URL.revokeObjectURL(track.url);
+            tracks.splice(index, 1);
+            renderAllTracks();
+        }
+
+        function renderTrackInUI(track, index) {
+            const listItem = document.createElement('li');
+            listItem.dataset.index = index;
+            listItem.draggable = true;
+
+            const cleanName = track.name.replace(/\.(mp3|wav)$/i, '');
+
+            const trackInfo = document.createElement('div');
+            trackInfo.className = 'track-info-group';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'track-title-text';
+            nameSpan.textContent = `${(index + 1).toString().padStart(2, '0')}. ${cleanName}`;
+
+            trackInfo.appendChild(nameSpan);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'item-actions';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '✕';
+
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeTrackAtIndex(index);
+            });
+
+            const handleSpan = document.createElement('span');
+            handleSpan.className = 'drag-handle';
+            handleSpan.textContent = '☰';
+
+            actionsDiv.appendChild(deleteBtn);
+            actionsDiv.appendChild(handleSpan);
+
+            listItem.appendChild(trackInfo);
+            listItem.appendChild(actionsDiv);
+
+            if (index === currentTrackIndex) {
+                listItem.classList.add('active');
+            }
+
+            listItem.addEventListener('click', () => {
+                currentTrackIndex = index;
+                playTrack(currentTrackIndex);
+            });
+
+            listItem.addEventListener('dragstart', (e) => {
+                draggedIndex = index;
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            listItem.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                listItem.classList.add('drag-over');
+            });
+
+            listItem.addEventListener('dragleave', () => {
+                listItem.classList.remove('drag-over');
+            });
+
+            listItem.addEventListener('drop', (e) => {
+                e.preventDefault();
+                listItem.classList.remove('drag-over');
+                moveTrack(draggedIndex, index);
+            });
+
+            handleSpan.addEventListener('touchstart', (e) => {
+                touchStartIdx = index;
+                listItem.classList.add('touch-dragging');
+            }, { passive: true });
+
+            handleSpan.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (el) {
+                    const li = el.closest('li');
+                    document.querySelectorAll('#playlist li').forEach(item => item.classList.remove('drag-over'));
+                    if (li && li !== listItem) {
+                        targetTouchLi = li;
+                        li.classList.add('drag-over');
+                    }
+                }
+            }, { passive: false });
+
+            handleSpan.addEventListener('touchend', () => {
+                listItem.classList.remove('touch-dragging');
+                document.querySelectorAll('#playlist li').forEach(item => item.classList.remove('drag-over'));
+                if (targetTouchLi) {
+                    const targetIdx = parseInt(targetTouchLi.dataset.index);
+                    moveTrack(touchStartIdx, targetIdx);
+                    targetTouchLi = null;
+                }
+                touchStartIdx = null;
+            });
+
+            playlist.appendChild(listItem);
+        }
+
+        playlistManagerBtn.addEventListener('click', () => {
+            playlistModal.style.display = 'flex';
+            loadSavedPlaylistNames();
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            playlistModal.style.display = 'none';
+        });
+
+        savePlaylistBtn.addEventListener('click', () => {
+            const name = playlistNameInput.value.trim();
+            if (!name) return alert("Lütfen bir playlist adı yazın.");
+            if (tracks.length === 0) return alert("Liste boş, kaydedilemez.");
+
+            const playlistData = {
+                name: name,
+                tracks: tracks.map(t => ({ name: t.name, file: t.file }))
+            };
+
+            const tx = db.transaction(["playlists"], "readwrite");
+            tx.objectStore("playlists").put(playlistData);
+            tx.oncomplete = () => {
+                alert("Playlist kaydedildi!");
+                playlistNameInput.value = "";
+                loadSavedPlaylistNames();
+            };
+        });
+
+        function loadSavedPlaylistNames() {
+            savedPlaylistsSelect.innerHTML = "";
+            const tx = db.transaction(["playlists"], "readonly");
+            tx.objectStore("playlists").getAll().onsuccess = (e) => {
+                const list = e.target.result;
+                list.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    opt.textContent = p.name;
+                    savedPlaylistsSelect.appendChild(opt);
+                });
+            };
+        }
+
+        loadPlaylistBtn.addEventListener('click', () => {
+            const selectedName = savedPlaylistsSelect.value;
+            if (!selectedName) return;
+
+            const tx = db.transaction(["playlists"], "readonly");
+            tx.objectStore("playlists").get(selectedName).onsuccess = (e) => {
+                const playlistData = e.target.result;
+                if (!playlistData) return;
+
+                const clearTx = db.transaction(["tracks"], "readwrite");
+                clearTx.objectStore("tracks").clear().onsuccess = () => {
+                    const addTx = db.transaction(["tracks"], "readwrite");
+                    const store = addTx.objectStore("tracks");
+                    playlistData.tracks.forEach(t => store.add(t));
+                    addTx.oncomplete = () => {
+                        loadTracksFromDB();
+                        playlistModal.style.display = 'none';
+                    };
+                };
+            };
+        });
+
+        deleteSavedPlaylistBtn.addEventListener('click', () => {
+            const selectedName = savedPlaylistsSelect.value;
+            if (!selectedName) return alert("Lütfen silinecek bir liste seçin.");
+
+            if (confirm(`"${selectedName}" kayıtlı listesini silmek istediğinize emin misiniz?`)) {
+                const tx = db.transaction(["playlists"], "readwrite");
+                tx.objectStore("playlists").delete(selectedName);
+                tx.oncomplete = () => {
+                    alert(`"${selectedName}" silindi.`);
+                    loadSavedPlaylistNames();
+                };
+            }
+        });
+
+        exportPlaylistBtn.addEventListener('click', async () => {
+            const selectedName = savedPlaylistsSelect.value;
+            if (!selectedName) return alert("Lütfen paketlemek için bir liste seçin.");
+
+            const tx = db.transaction(["playlists"], "readonly");
+            tx.objectStore("playlists").get(selectedName).onsuccess = async (e) => {
+                const playlistData = e.target.result;
+                if (!playlistData) return;
+
+                trackNameDisplay.textContent = "ZIP OLUŞTURULUYOR...";
+                const zip = new JSZip();
+                
+                playlistData.tracks.forEach(t => {
+                    zip.file(t.name, t.file);
+                });
+
+                const metadata = {
+                    name: playlistData.name,
+                    order: playlistData.tracks.map(t => t.name)
+                };
+                zip.file("playlist_info.json", JSON.stringify(metadata, null, 2));
+
+                const content = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = `${playlistData.name}.zip`;
+                a.click();
+                trackNameDisplay.textContent = "ZIP HAZIR";
+            };
+        });
+
+        importPlaylistBtn.addEventListener('click', () => {
+            importInput.click();
+        });
+
+        importInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                trackNameDisplay.textContent = "ZIP YÜKLENİYOR...";
+                const zip = await JSZip.loadAsync(file);
+                
+                const metaFile = zip.file("playlist_info.json");
+                if (!metaFile) throw new Error("Ayar dosyası eksik.");
+                
+                const metaText = await metaFile.async("text");
+                const metadata = JSON.parse(metaText);
+
+                const restoredTracks = [];
+                for (const name of metadata.order) {
+                    const zipItem = zip.file(name);
+                    if (zipItem) {
+                        const blob = await zipItem.async("blob");
+                        const audioFile = new File([blob], name, { type: blob.type || "audio/mpeg" });
+                        restoredTracks.push({ name: name, file: audioFile });
+                    }
+                }
+
+                if (restoredTracks.length === 0) throw new Error("Şarkı bulunamadı.");
+
+                const playlistData = { name: metadata.name, tracks: restoredTracks };
+                const tx = db.transaction(["playlists"], "readwrite");
+                tx.objectStore("playlists").put(playlistData);
+
+                tx.oncomplete = () => {
+                    const clearTx = db.transaction(["tracks"], "readwrite");
+                    clearTx.objectStore("tracks").clear().onsuccess = () => {
+                        const addTx = db.transaction(["tracks"], "readwrite");
+                        const store = addTx.objectStore("tracks");
+                        
+                        restoredTracks.forEach(t => store.add({ name: t.name, file: t.file }));
+                        
+                        addTx.oncomplete = () => {
+                            loadTracksFromDB();
+                            loadSavedPlaylistNames();
+                            playlistModal.style.display = 'none';
+                            importInput.value = "";
+                            alert(`"${metadata.name}" paketi yüklendi ve listeye eklendi!`);
+                        };
+                    };
+                };
+            } catch (err) {
+                alert("ZIP paketi okunamadı veya bozuk.");
+                trackNameDisplay.textContent = "ERR: ZIP IMPORT";
+            }
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const files = Array.from(event.target.files);
+            files.forEach((file) => {
+                const fileNameLower = file.name.toLowerCase();
+                const isMp3 = file.type === 'audio/mpeg' || fileNameLower.endsWith('.mp3');
+                const isWav = file.type === 'audio/wav' || file.type === 'audio/x-wav' || fileNameLower.endsWith('.wav');
+
+                if (isMp3 || isWav) {
+                    saveTrackToDB(file);
+                } else {
+                    alert('Lütfen sadece MP3 veya WAV dosyaları seçin.');
+                }
+            });
+        });
+
+        clearButton.addEventListener('click', () => {
+            if (tracks.length === 0) return;
+
+            if (confirm("Tüm listeyi temizlemek istediğinize emin misiniz?")) {
+                const transaction = db.transaction(["tracks"], "readwrite");
+                const store = transaction.objectStore("tracks");
+                const clearRequest = store.clear();
+
+                clearRequest.onsuccess = () => {
+                    tracks.forEach(track => URL.revokeObjectURL(track.url));
+                    tracks = [];
+                    currentTrackIndex = -1;
+                    
+                    audioPlayer.pause();
+                    audioPlayer.src = "";
+                    
+                    playlist.innerHTML = "";
+                    playPauseButton.classList.remove('active');
+                    playPauseButton.textContent = 'PLAY';
+                    trackNameDisplay.textContent = "LIST CLEARED";
+                };
+            }
+        });
+
+        audioPlayer.addEventListener('ended', () => { handleEnd(); });
+
+        playPauseButton.addEventListener('click', () => {
+            if (currentTrackIndex === -1 && tracks.length > 0) {
+                currentTrackIndex = 0;
+                playTrack(currentTrackIndex);
+            } else if (audioPlayer.paused && tracks.length > 0) {
+                audioPlayer.play();
+                playPauseButton.classList.add('active');
+                playPauseButton.textContent = 'PAUSE';
+            } else if (tracks.length > 0) {
+                audioPlayer.pause();
+                playPauseButton.classList.remove('active');
+                playPauseButton.textContent = 'PLAY';
+            }
+        });
+
+        prevTrackButton.addEventListener('click', () => {
+            if (currentTrackIndex > 0) {
+                currentTrackIndex--;
+                playTrack(currentTrackIndex);
+            } else if (repeatMode === 'all' && tracks.length > 0) {
+                currentTrackIndex = tracks.length - 1;
+                playTrack(currentTrackIndex);
+            }
+        });
+
+        nextTrackButton.addEventListener('click', () => { nextTrack(); });
+
+        repeatButton.addEventListener('click', () => {
+            switch (repeatMode) {
+                case 'all':
+                    repeatMode = 'one';
+                    repeatButton.classList.add('active');
+                    repeatButton.textContent = 'REP [1]';
+                    loopIndicator.textContent = "ONE";
+                    break;
+                case 'one':
+                    repeatMode = 'none';
+                    repeatButton.classList.remove('active');
+                    repeatButton.textContent = 'REP [X]';
+                    loopIndicator.textContent = "X";
+                    break;
+                default:
+                    repeatMode = 'all';
+                    repeatButton.classList.add('active');
+                    repeatButton.textContent = 'REP';
+                    loopIndicator.textContent = "ALL";
+            }
+        });
+
+        shuffleButton.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            if (isShuffle) { 
+                shuffleButton.classList.add('active'); 
+                loopIndicator.textContent = "SHUF";
+            } else { 
+                shuffleButton.classList.remove('active'); 
+                loopIndicator.textContent = repeatMode.toUpperCase();
+            }
+        });
+
+        function playTrack(index) {
+            Array.from(playlist.children).forEach((item, i) => {
+                item.classList.remove('active');
+                if (i === index) item.classList.add('active');
+            });
+
+            const currentTrack = tracks[index];
+            const cleanName = currentTrack.name.replace(/\.(mp3|wav)$/i, '');
+
+            audioPlayer.src = currentTrack.url;
+            audioPlayer.play();
+            
+            playPauseButton.classList.add('active');
+            playPauseButton.textContent = 'PAUSE';
+            trackNameDisplay.textContent = cleanName.toUpperCase();
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: cleanName,
+                    artist: 'Winamp Player',
+                    album: 'Winamp Classic'
+                });
+            }
+        }
+
+        function nextTrack() {
+            if (tracks.length === 0) return;
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * tracks.length);
+            } else if (currentTrackIndex < tracks.length - 1) {
+                currentTrackIndex++;
+            } else if (repeatMode === 'all') {
+                currentTrackIndex = 0;
+            } else {
+                return;
+            }
+            playTrack(currentTrackIndex);
+        }
+
+        function handleEnd() {
+            if (repeatMode === 'one') { playTrack(currentTrackIndex); } 
+            else { nextTrack(); }
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!isDragging && audioPlayer.duration) {
+                progressBar.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            }
+            document.getElementById('timeDisplay').textContent = formatTime(audioPlayer.currentTime);
+        });
+
+        progressBar.addEventListener('input', () => { isDragging = true; });
+        progressBar.addEventListener('change', () => {
+            isDragging = false;
+            if (audioPlayer.duration) {
+                audioPlayer.currentTime = (progressBar.value / 100) * audioPlayer.duration;
+            }
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.setActionHandler('play', () => { audioPlayer.play(); });
+            navigator.mediaSession.setActionHandler('pause', () => { audioPlayer.pause(); });
+            navigator.mediaSession.setActionHandler('previoustrack', () => { prevTrackButton.click(); });
+            navigator.mediaSession.setActionHandler('nexttrack', () => { nextTrackButton.click(); });
+        }
+    </script>
+</body>
+</html>
